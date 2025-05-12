@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "if-found-lost-4f67e"
+  },
+  "targets": {
+    "if-found-lost-4f67e": {
+      "hosting": {
+        "scan": [
+          "iffoundlost-scanner"
+        ]
+      }
+    }
+  }
+}

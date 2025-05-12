@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Check if the user is an admin by verifying their UID exists in adminUsers
+    function isAdmin() {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+    }
+
+    // Check if the user has the 'superadmin' role assigned
+    function isSuperAdmin() {
+      return request.auth != null
+          && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid))
+               .data.assignedRoles
+               .hasAny(['superadmin']);
+    }
+
+    // Check if the user has a specific permission or is a superadmin
+    function hasPermission(permission) {
+      let userDoc = get(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+      return userDoc.data.permissions[permission] == true
+          || isSuperAdmin();
+    }
+
+    // Add this function to check if fields are related to login activity
+    function isLoginRelatedField(field) {
+      return field == 'lastActivity'
+          || field == 'lastLogin'
+          || field == 'failedLoginAttempts'
+          || field == 'accountLockedUntil';
+    }
+
+    // Sticker codes: any admin can read, those with batch permission can write
+    match /stickerCodes/{codeId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin() && hasPermission('canCreateBatches');
+    }
+
+    // Sticker batches: same permissions as stickerCodes
+    match /stickerBatches/{batchId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin() && hasPermission('canCreateBatches');
+    }
+
+    // Admin users collection rules
+    match /adminUsers/{userId} {
+      // IMPORTANT CHANGE: Allow superadmins to list all users,
+      // and allow anyone (even unauthenticated) to look up by exact email
+      allow list: if isSuperAdmin()
+          || (
+               // exactly one email filter
+               request.query.filters.size() == 1
+            && request.query.filters[0].field == "email"
+            && request.query.filters[0].op == "=="
+            // limit exactly 1
+            && request.query.limit == 1
+            // exactly one implicit name-ordering
+            && request.query.orderBy.size() == 1
+            && request.query.orderBy[0].field == "__name__"
+            && request.query.orderBy[0].direction == "asc"
+             );
+
+      // Allow document reads for any admin
+      allow get: if isAdmin();
+
+      // Allow updates only to login-related fields for the user themself,
+      // or allow any update for superadmins
+      allow update: if (
+        request.auth != null
+     && (
+          // owner updating only allowed fields
+          request.auth.uid == userId
+       && request.resource.data.diff(resource.data)
+            .affectedKeys()
+            .hasOnly([
+              'lastActivity',
+              'failedLoginAttempts',
+              'accountLockedUntil',
+              'lastLogin',
+              'lastLoginAttempt'
+            ])
+        )
+      ) || isSuperAdmin();
+
+      // Only superadmins can create new docs or perform full writes
+      allow create, write: if isSuperAdmin();
+    }
+
+    // Activity log: admins can read/create; superadmins can modify/delete
+    match /activityLog/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin(); // All admins can create logs
+      allow update, delete: if isSuperAdmin(); // Only superadmins can modify logs
+    }
+
+    // Login attempts: anyone can record; user can read their own; superadmins can read all
+    match /loginAttempts/{attemptId} {
+      // Allow creating login attempt records regardless of authentication
+      allow create: if true;
+
+      // Users can read their own login attempts
+      allow read: if request.auth != null
+                && request.auth.uid == resource.data.userId;
+
+      // Superadmins can read all login attempts
+      allow read: if isSuperAdmin();
+
+      // No one can modify or delete login attempts (audit trail)
+      allow update, delete: if false;
+    }
+  }
+}
