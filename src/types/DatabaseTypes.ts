@@ -1,8 +1,5 @@
 // src/types/DatabaseTypes.ts
 
-import { CodeStatus } from './CodeTypes';
-import { ReportStatus } from './ReportTypes';
-
 /**
  * User data stored in Firestore
  */
@@ -30,7 +27,7 @@ export interface UserData {
  */
 export interface StickerCodeData {
   batchId: string;
-  status: CodeStatus;
+  status: string; // Uses CodeStatus type values
   createdAt: any; // Firebase Timestamp
   assignedAt?: any; // Firebase Timestamp
   assignedTo?: string;
@@ -95,7 +92,7 @@ export interface FoundReportData {
   codeId: string;
   batchId?: string;
   reportedAt: any; // Firebase Timestamp
-  status: ReportStatus;
+  status: string; // Uses ReportStatus type values
   ownerNotified: boolean;
   ownerNotifiedAt?: any; // Firebase Timestamp
   ownerContactedFinder: boolean;
@@ -115,7 +112,7 @@ export interface FoundReportData {
  */
 export interface NotificationData {
   recipientId: string;
-  type: string;
+  type: string; // Uses NotificationType values
   title: string;
   message: string;
   data: Record<string, any>;

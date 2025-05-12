@@ -6,11 +6,14 @@ import { functions, db } from '../firebase';
 /**
  * Notification types
  */
-export enum NotificationType {
-  ITEM_FOUND = 'item_found',
-  ITEM_RECOVERED = 'item_recovered',
-  REPORT_UPDATE = 'report_update',
-}
+export type NotificationType = 'item_found' | 'item_recovered' | 'report_update';
+
+// Constants for NotificationType (for reference)
+export const NOTIFICATION_TYPES = {
+  ITEM_FOUND: 'item_found',
+  ITEM_RECOVERED: 'item_recovered',
+  REPORT_UPDATE: 'report_update',
+} as const;
 
 /**
  * Notification data interface
@@ -78,7 +81,7 @@ export class NotificationService {
       
       const result = await sendNotification({
         recipientId: ownerId,
-        type: NotificationType.ITEM_FOUND,
+        type: 'item_found',
         title: 'Your Item Has Been Found!',
         message: `Someone has found your item with code ${codeId} in ${locationFound}. Check your account for details.`,
         data: {
