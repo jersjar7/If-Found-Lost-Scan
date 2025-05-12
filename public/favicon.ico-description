@@ -1,0 +1,20 @@
+// This is a placeholder description for favicon.ico
+// In a real project, you would need to generate an ICO file with multiple resolutions
+// For an actual favicon.ico file:
+// - Create a 16x16, 32x32, 48x48 pixel version of the IfFoundLost logo
+// - Use a QR code icon with the IFL branding colors (primary blue and green)
+// - Save in .ico format which supports multiple image sizes in one file
+// - Place in the public folder
+
+// Alternative approach:
+// - Use a favicon.svg in public folder
+// - In index.html, include:
+//   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+//   <link rel="alternate icon" href="/favicon.ico" />
+
+// For modern browsers, also consider adding:
+// <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+// <link rel="manifest" href="/manifest.json" />
+// With appropriate files in the public folder
+
+// The favicon should match the brand colors and style of the logo.svg we created.

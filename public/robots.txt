@@ -1,0 +1,12 @@
+# robots.txt for IfFoundLost Scanner Website
+
+# Allow all web crawlers
+User-agent: *
+Allow: /
+
+# Disallow specific paths
+Disallow: /success
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://scan.iffoundlost.com/sitemap.xml
