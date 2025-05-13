@@ -42,11 +42,11 @@ export class CodeValidationService {
       console.log('Validating code:', sanitizedCode);
       
       // Use getDoc() for a one-time read operation
+      console.log('Getting document:', `stickerCodes/${sanitizedCode}`);
+      const codeRef = doc(db, 'stickerCodes', sanitizedCode);
+      
       try {
-        console.log('Getting document:', `stickerCodes/${sanitizedCode}`);
-        const codeRef = doc(db, 'stickerCodes', sanitizedCode);
         const codeDoc = await getDoc(codeRef);
-        
         console.log('Document exists:', codeDoc.exists());
         
         if (!codeDoc.exists()) {
@@ -77,17 +77,25 @@ export class CodeValidationService {
         let batchData = {};
         if (codeData.batchId) {
           console.log('Getting batch data for:', codeData.batchId);
-          const batchRef = doc(db, 'stickerBatches', codeData.batchId);
-          const batchDoc = await getDoc(batchRef);
-          
-          if (batchDoc.exists()) {
-            batchData = batchDoc.data();
-            console.log('Retrieved batch data:', batchData);
-          } else {
-            console.log('Batch document not found');
+          try {
+            const batchRef = doc(db, 'stickerBatches', codeData.batchId);
+            const batchDoc = await getDoc(batchRef);
+            
+            if (batchDoc.exists()) {
+              batchData = batchDoc.data();
+              console.log('Retrieved batch data:', batchData);
+            } else {
+              console.log('Batch document not found');
+            }
+          } catch (batchError) {
+            // Log but don't fail if batch data can't be retrieved
+            console.warn('Unable to retrieve batch data:', batchError);
+            console.log('Continuing with validation without batch data');
+            // Don't rethrow - we can validate without batch data
           }
         }
         
+        // Always return a successful result if we got this far
         return {
           valid: true,
           code: sanitizedCode,
@@ -95,6 +103,7 @@ export class CodeValidationService {
           codeData: codeData as any,
           batchData: batchData as any
         };
+        
       } catch (docError: any) {
         console.error('Error during document retrieval:', docError);
         console.error('Error details:', docError.code, docError.message);
