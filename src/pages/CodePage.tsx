@@ -32,23 +32,30 @@ const CodePage: React.FC = () => {
   // Validate code on initial load if provided
   useEffect(() => {
     if (initialCode && stage === 'validation') {
-      validateCode(sanitizeCode(initialCode));
+      const sanitizedInitialCode = sanitizeCode(initialCode);
+      console.log('Initial code detected, validating:', sanitizedInitialCode);
+      validateCode(sanitizedInitialCode);
     }
   }, [initialCode]);
 
   const handleCodeSubmit = (submittedCode: string) => {
+    const sanitizedCode = sanitizeCode(submittedCode);
+    console.log('Code submitted by user:', sanitizedCode);
     setStage('validation');
-    setCode(submittedCode);
-    validateCode(submittedCode);
+    setCode(sanitizedCode);
+    validateCode(sanitizedCode);
   };
   
   const validateCode = async (codeToValidate: string) => {
     setIsValidating(true);
     setError(null);
+    console.log('Starting validation process for code:', codeToValidate);
     
     try {
       // First, validate the format
       const formatCheck = validateCodeFormat(codeToValidate);
+      console.log('Format validation result:', formatCheck);
+      
       if (!formatCheck.valid) {
         setError(formatCheck.message);
         setStage('code-entry');
@@ -57,7 +64,9 @@ const CodePage: React.FC = () => {
       }
       
       // Then, validate against the database
+      console.log('Format valid, checking against database...');
       const result = await CodeValidationService.validateCode(codeToValidate);
+      console.log('Database validation result:', result);
       setValidationResult(result);
       
       if (!result.valid) {
@@ -65,17 +74,26 @@ const CodePage: React.FC = () => {
         setStage('code-entry');
       } else {
         // Check if this code has been reported already
+        console.log('Code is valid, checking for existing reports...');
         const existingReport = await ReportService.checkExistingReport(codeToValidate);
+        console.log('Existing report check result:', existingReport);
         
         if (existingReport.exists) {
+          console.log('Code has already been reported');
           setStage('already-reported');
         } else {
+          console.log('Code is valid and not yet reported, showing form');
           setStage('report-form');
         }
       }
     } catch (err: any) {
       console.error('Validation error:', err);
-      setError(err.message || 'An error occurred during validation. Please try again.');
+      // Enhanced error details for debugging
+      const errorDetail = err.code 
+        ? `${err.code}: ${err.message}`
+        : err.message || 'An unknown error occurred';
+        
+      setError(`Validation failed. ${errorDetail}`);
       setStage('code-entry');
     } finally {
       setIsValidating(false);
@@ -85,14 +103,20 @@ const CodePage: React.FC = () => {
   const handleReportSubmit = async (data: FoundItemData) => {
     setIsSubmitting(true);
     setError(null);
+    console.log('Submitting report for code:', code);
     
     try {
       const reportId = await ReportService.submitReport(data);
+      console.log('Report submitted successfully, ID:', reportId);
       // Navigate to success page with the report ID
       navigate(`/success?reportId=${reportId}&code=${code}`);
     } catch (err: any) {
       console.error('Report submission error:', err);
-      setError(err.message || 'Failed to submit the report. Please try again.');
+      const errorDetail = err.code 
+        ? `${err.code}: ${err.message}`
+        : err.message || 'An unknown error occurred';
+        
+      setError(`Failed to submit report. ${errorDetail}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -119,7 +143,7 @@ const CodePage: React.FC = () => {
           <div className="validation-stage">
             <h1>Validating Code</h1>
             <div className="loader">Loading...</div>
-            <p>Please wait while we validate the code: {code}</p>
+            <p>Please wait while we validate the code: <strong>{code}</strong></p>
           </div>
         );
         
@@ -129,6 +153,22 @@ const CodePage: React.FC = () => {
             <div className="validation-success">
               <h2>Valid Code Found!</h2>
               <p>This code is registered to our system. Please fill out the form below to report that you've found this item.</p>
+              
+              {/* Display additional information from validation result if available */}
+              {validationResult && (
+                <div className="item-details">
+                  {validationResult.codeData?.productType && (
+                    <p className="product-type-info">
+                      Item type: <strong>{validationResult.codeData.productType}</strong>
+                    </p>
+                  )}
+                  {validationResult.batchData?.name && (
+                    <p className="batch-info">
+                      Batch: <strong>{validationResult.batchData.name}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             
             {error && <div className="error-message">{error}</div>}
