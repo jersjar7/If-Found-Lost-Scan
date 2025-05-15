@@ -38,6 +38,11 @@ export class ReportService {
         foundDate: reportData.foundDate,
         message: reportData.message || '',
         
+        // New location and photo fields
+        latitude: reportData.latitude,
+        longitude: reportData.longitude,
+        photos: reportData.photos || [],
+        
         // Code-related information
         code: reportData.code,
         codeId: reportData.code, // Use the code as the ID for easy lookup

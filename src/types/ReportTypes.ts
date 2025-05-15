@@ -36,6 +36,10 @@ export interface FoundReportData {
   resolvedAt?: any; // Firebase Timestamp
   productType?: string;
   ownerNotes?: string;
+  // New fields
+  latitude?: number;
+  longitude?: number;
+  photos?: string[]; // Array of photo URLs
 }
 
 /**
@@ -56,6 +60,10 @@ export interface CreateFoundReportData {
   foundDate: string;
   message?: string;
   code: string;
+  // New fields
+  latitude?: number;
+  longitude?: number;
+  photos?: string[]; // Array of photo URLs
 }
 
 /**

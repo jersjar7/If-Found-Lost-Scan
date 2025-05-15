@@ -105,6 +105,10 @@ export interface FoundReportData {
   userAgent?: string;
   isVerified?: boolean;
   verifiedAt?: any; // Firebase Timestamp
+  // New fields
+  latitude?: number;
+  longitude?: number;
+  photos?: string[]; // Array of photo URLs
 }
 
 /**
